@@ -1,0 +1,45 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ethnos Web</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Ethnos</h1>
+
+    <div id="login-screen">
+      <input type="text" id="username" placeholder="Seu Nome" />
+      <input type="text" id="room" placeholder="Nome da Sala" />
+      <button onclick="joinGame()">Entrar na Partida</button>
+    </div>
+
+    <div id="game-screen" style="display: none">
+      <h2 id="turn-indicator">Turno: Aguardando...</h2>
+
+      <div class="actions">
+        <button onclick="drawCard()">Comprar Carta do Topo</button>
+      </div>
+
+      <div class="player-area">
+        <h3>Sua Mão</h3>
+        <ul id="my-hand" class="card-list"></ul>
+      </div>
+
+      <h3>Reinos</h3>
+      <div class="board" id="realms-board"></div>
+
+      <h3>Oponentes</h3>
+      <ul id="players-list"></ul>
+    </div>
+
+    <!-- Carrega o script principal do jogo -->
+    <script src="{{ url_for('static', filename='js/jogo.js') }}"></script>
+  </body>
+</html>
