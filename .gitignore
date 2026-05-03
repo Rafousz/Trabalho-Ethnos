@@ -1,2 +1,2 @@
-./venv
-./logica_jogo/__pycache__
+venv/
+__pycache__/
