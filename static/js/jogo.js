@@ -59,6 +59,17 @@ socket.on("game_update", (state) => {
   document.getElementById("turn-indicator").innerText =
     `Turno de: ${state.current_turn}`
 
+  const eraIndicator = document.getElementById("era-indicator")
+  if (eraIndicator) {
+    const maxEras = state.max_eras || 3
+    eraIndicator.innerText = `Era: ${state.current_era}/${maxEras}`
+  }
+
+  const dragonIndicator = document.getElementById("dragon-indicator")
+  if (dragonIndicator) {
+    dragonIndicator.innerText = `Dragoes: ${state.dragons_drawn}/3`
+  }
+
   // Atualiza a lista de jogadores
   const playersList = document.getElementById("players-list")
   playersList.innerHTML = ""
@@ -82,7 +93,12 @@ socket.on("game_update", (state) => {
   if (marketList) {
     marketList.innerHTML = ""
     state.face_up_cards.forEach((card, index) => {
-      marketList.innerHTML += `<li onclick="drawMarketCard(${index})">${card.tribe}<br><small>${card.realm}</small></li>`
+      const isDragon = !!card.is_dragon
+      const label = isDragon ? "Dragao" : card.tribe
+      const realm = isDragon ? "Especial" : card.realm
+      const clickAttr = isDragon ? "" : `onclick="drawMarketCard(${index})"`
+      const classAttr = isDragon ? "dragon" : ""
+      marketList.innerHTML += `<li class="${classAttr}" ${clickAttr}>${label}<br><small>${realm}</small></li>`
     })
   }
 })
