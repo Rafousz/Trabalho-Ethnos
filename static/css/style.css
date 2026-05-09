@@ -61,4 +61,17 @@ button:hover {
   padding: 10px;
   border-radius: 5px;
   font-weight: bold;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.card-list li.selected {
+  border-color: #2c3e50;
+  transform: translateY(-5px);
+}
+
+.card-list li.leader {
+  background: #f39c12; /* Cor diferente para destacar o líder */
+  border-color: #d35400;
 }

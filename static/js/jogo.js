@@ -1,6 +1,7 @@
 // static/js/game.js
 const socket = io()
 let currentRoom = ""
+let selectedCards = [] // Guarda os índices das cartas selecionadas na mão
 
 function joinGame() {
   const name = document.getElementById("username").value
@@ -17,6 +18,40 @@ function joinGame() {
 
 function drawCard() {
   socket.emit("action_draw_card", { room: currentRoom })
+}
+
+function drawMarketCard(index) {
+  socket.emit("action_draw_market", { room: currentRoom, index: index })
+}
+
+function playBand() {
+  if (selectedCards.length === 0) {
+    alert("Selecione pelo menos uma carta para formar um bando!")
+    return
+  }
+  socket.emit("action_play_band", { room: currentRoom, indices: selectedCards })
+}
+
+function toggleSelect(index) {
+  const idx = selectedCards.indexOf(index)
+  const el = document.getElementById(`card-${index}`)
+  
+  if (idx > -1) {
+    // Deselecionar
+    selectedCards.splice(idx, 1)
+    el.classList.remove("selected")
+    el.classList.remove("leader")
+  } else {
+    // Selecionar
+    selectedCards.push(index)
+    el.classList.add("selected")
+  }
+  
+  // Atualizar visual do líder (primeira carta selecionada)
+  document.querySelectorAll("#my-hand li").forEach((li) => li.classList.remove("leader"))
+  if (selectedCards.length > 0) {
+    document.getElementById(`card-${selectedCards[0]}`).classList.add("leader")
+  }
 }
 
 // Atualizações do estado geral do jogo
@@ -41,14 +76,24 @@ socket.on("game_update", (state) => {
                 Marcadores: ${tokens.length}
             </div>`
   }
+
+  // Atualiza o Mercado
+  const marketList = document.getElementById("market-list")
+  if (marketList) {
+    marketList.innerHTML = ""
+    state.face_up_cards.forEach((card, index) => {
+      marketList.innerHTML += `<li onclick="drawMarketCard(${index})">${card.tribe}<br><small>${card.realm}</small></li>`
+    })
+  }
 })
 
 // Atualizações privadas (Sua mão)
 socket.on("private_update", (data) => {
+  selectedCards = [] // Limpa seleção ao atualizar a mão
   const handList = document.getElementById("my-hand")
   handList.innerHTML = ""
-  data.hand.forEach((card) => {
-    handList.innerHTML += `<li>${card.tribe}<br><small>${card.realm}</small></li>`
+  data.hand.forEach((card, index) => {
+    handList.innerHTML += `<li id="card-${index}" onclick="toggleSelect(${index})">${card.tribe}<br><small>${card.realm}</small></li>`
   })
 })
 
