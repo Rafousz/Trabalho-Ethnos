@@ -1,7 +1,7 @@
-// static/js/game.js
+// static/js/jogo.js
 const socket = io()
 let currentRoom = ""
-let selectedCards = [] // Guarda os índices das cartas selecionadas na mão
+let selectedCards = []
 
 function joinGame() {
   const name = document.getElementById("username").value
@@ -26,7 +26,7 @@ function drawMarketCard(index) {
 
 function playBand() {
   if (selectedCards.length === 0) {
-    alert("Selecione pelo menos uma carta para formar um bando!")
+    alert("Selecione pelo menos uma carta!")
     return
   }
   socket.emit("action_play_band", { room: currentRoom, indices: selectedCards })
@@ -35,77 +35,100 @@ function playBand() {
 function toggleSelect(index) {
   const idx = selectedCards.indexOf(index)
   const el = document.getElementById(`card-${index}`)
-  
+
   if (idx > -1) {
-    // Deselecionar
     selectedCards.splice(idx, 1)
     el.classList.remove("selected")
     el.classList.remove("leader")
   } else {
-    // Selecionar
     selectedCards.push(index)
     el.classList.add("selected")
   }
-  
-  // Atualizar visual do líder (primeira carta selecionada)
-  document.querySelectorAll("#my-hand li").forEach((li) => li.classList.remove("leader"))
+
+  document
+    .querySelectorAll("#my-hand li")
+    .forEach((li) => li.classList.remove("leader"))
   if (selectedCards.length > 0) {
     document.getElementById(`card-${selectedCards[0]}`).classList.add("leader")
   }
 }
 
-// Atualizações do estado geral do jogo
 socket.on("game_update", (state) => {
-  document.getElementById("turn-indicator").innerText =
-    `Turno de: ${state.current_turn}`
-
-  const eraIndicator = document.getElementById("era-indicator")
-  if (eraIndicator) {
-    const maxEras = state.max_eras || 3
-    eraIndicator.innerText = `Era: ${state.current_era}/${maxEras}`
+  // Anúncio de Vencedor
+  if (state.game_over) {
+    document.getElementById("turn-indicator").innerHTML =
+      `<span style="color: #27ae60; font-size: 1.5em;">🏆 VENCEDOR: ${state.winner} 🏆</span>`
+    // Desabilitar botões
+    document
+      .querySelectorAll(".actions button")
+      .forEach((btn) => (btn.disabled = true))
+  } else {
+    document.getElementById("turn-indicator").innerText =
+      `Turno de: ${state.current_turn}`
   }
 
-  const dragonIndicator = document.getElementById("dragon-indicator")
-  if (dragonIndicator) {
-    dragonIndicator.innerText = `Dragoes: ${state.dragons_drawn}/3`
-  }
+  document.getElementById("era-indicator").innerText =
+    `Era: ${state.current_era}/${state.max_eras}`
+  document.getElementById("dragon-indicator").innerText =
+    `Dragões: ${state.dragons_drawn}/3`
 
-  // Atualiza a lista de jogadores
   const playersList = document.getElementById("players-list")
   playersList.innerHTML = ""
   for (const [sid, p] of Object.entries(state.players)) {
-    playersList.innerHTML += `<li><strong>${p.name}</strong> - Cartas: ${p.hand_size} | Pontos: ${p.score}</li>`
+    playersList.innerHTML += `
+      <li>
+        <span style="display:inline-block; width:10px; height:10px; background:${p.color}; border-radius:50%; margin-right:5px;"></span>
+        <strong>${p.name}</strong> - Cartas: ${p.hand_size} | Pontos: ${p.score}
+      </li>`
   }
 
-  // Atualiza os Reinos
   const boardDiv = document.getElementById("realms-board")
   boardDiv.innerHTML = ""
-  for (const [realm, tokens] of Object.entries(state.board)) {
+  for (const [realm, sids] of Object.entries(state.board)) {
+    const glorias = state.glory_tokens[realm]
+
+    // Constrói a lista de valores de todas as eras
+    let glóriasListHTML =
+      '<div style="font-size: 0.85em; text-align: left; margin: 5px 0;">'
+    glorias.forEach((val, idx) => {
+      const eraNum = idx + 1
+      const isCurrent = eraNum === state.current_era && !state.game_over
+      const style = isCurrent
+        ? "font-weight: bold; color: #e67e22; background: #fff3e0; padding: 1px 4px; border-radius: 3px;"
+        : "color: #7f8c8d;"
+      glóriasListHTML += `<div style="${style}">Era ${eraNum}: ${val} pts</div>`
+    })
+    glóriasListHTML += "</div>"
+
+    let tokensHTML = ""
+    sids.forEach((sid) => {
+      const cor = state.players[sid] ? state.players[sid].color : "#000"
+      tokensHTML += `<span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:${cor}; margin: 2px; border: 1px solid #333;"></span>`
+    })
+
     boardDiv.innerHTML += `
-            <div class="realm">
-                <strong>${realm.toUpperCase()}</strong><br>
-                Marcadores: ${tokens.length}
-            </div>`
+      <div class="realm" style="min-width: 140px;">
+        <strong>${realm.toUpperCase()}</strong>
+        ${glóriasListHTML}
+        <div style="margin-top:8px; min-height:30px; border-top: 1px solid #ddd; padding-top: 5px;">${tokensHTML}</div>
+      </div>`
   }
 
-  // Atualiza o Mercado
   const marketList = document.getElementById("market-list")
-  if (marketList) {
-    marketList.innerHTML = ""
-    state.face_up_cards.forEach((card, index) => {
-      const isDragon = !!card.is_dragon
-      const label = isDragon ? "Dragao" : card.tribe
-      const realm = isDragon ? "Especial" : card.realm
-      const clickAttr = isDragon ? "" : `onclick="drawMarketCard(${index})"`
-      const classAttr = isDragon ? "dragon" : ""
-      marketList.innerHTML += `<li class="${classAttr}" ${clickAttr}>${label}<br><small>${realm}</small></li>`
-    })
-  }
+  marketList.innerHTML = ""
+  state.face_up_cards.forEach((card, index) => {
+    const isDragon = !!card.is_dragon
+    const label = isDragon ? "Dragão" : card.tribe
+    const realm = isDragon ? "Especial" : card.realm
+    const clickAttr =
+      isDragon || state.game_over ? "" : `onclick="drawMarketCard(${index})"`
+    const classAttr = isDragon ? "dragon" : ""
+    marketList.innerHTML += `<li class="${classAttr}" ${clickAttr}>${label}<br><small>${realm}</small></li>`
+  })
 })
 
-// Atualizações privadas (Sua mão)
 socket.on("private_update", (data) => {
-  selectedCards = [] // Limpa seleção ao atualizar a mão
+  selectedCards = []
   const handList = document.getElementById("my-hand")
   handList.innerHTML = ""
   data.hand.forEach((card, index) => {

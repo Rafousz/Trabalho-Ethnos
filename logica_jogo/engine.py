@@ -1,18 +1,31 @@
 # game_logic/engine.py
+import random
 from .jogador import Player
 from .cartas import generate_deck, REALMS
 
 class EthnosGame:
     def __init__(self, room_id):
         self.room_id = room_id
-        self.players = {} # Dicionário de objetos Player
-        self.board = {realm: [] for realm in REALMS}
+        self.players = {} 
+        self.board = {realm: [] for realm in REALMS} 
         self.face_up_cards = []
         self.deck = []
         self.current_turn = None
         self.current_era = 1
         self.max_eras = 3
         self.dragons_drawn = 0
+        self.game_over = False # Novo
+        self.winner = None     # Novo
+        
+        self.available_colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22']
+        self.player_colors = {} 
+
+        self.glory_tokens = {}
+        valores_base = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for realm in REALMS:
+            valores = sorted(random.choices(valores_base, k=3))
+            self.glory_tokens[realm] = valores
+
         self._reset_era_state()
 
     def _reset_era_state(self):
@@ -24,6 +37,7 @@ class EthnosGame:
         return bool(card.get('is_dragon'))
 
     def _draw_until_non_dragon(self):
+        if self.game_over: return None, False
         while self.deck:
             card = self.deck.pop()
             if self._is_dragon(card):
@@ -37,7 +51,7 @@ class EthnosGame:
 
     def _deal_initial_hands(self):
         updated_hands = {}
-        if not self.players:
+        if not self.players or self.game_over:
             return updated_hands
 
         for player in self.players.values():
@@ -54,16 +68,73 @@ class EthnosGame:
 
         return updated_hands
 
+    def _calcular_pontuacao_era(self):
+        for realm, tokens in self.board.items():
+            contagem = {}
+            for sid in tokens:
+                contagem[sid] = contagem.get(sid, 0) + 1
+            
+            if not contagem:
+                continue
+
+            grupos = {}
+            for sid, qtd in contagem.items():
+                grupos.setdefault(qtd, []).append(sid)
+            
+            quantidades_ordenadas = sorted(grupos.keys(), reverse=True)
+            pontos_disponiveis = [self.glory_tokens[realm][i] for i in range(self.current_era)]
+            pontos_disponiveis.sort(reverse=True)
+            
+            posicao_ranking = 0
+            for qtd in quantidades_ordenadas:
+                jogadores_empatados = grupos[qtd]
+                n_empate = len(jogadores_empatados)
+                bloco_pontos = pontos_disponiveis[posicao_ranking : posicao_ranking + n_empate]
+                
+                if not bloco_pontos:
+                    break
+                
+                total_pontos = sum(bloco_pontos)
+                pontos_por_cabeca = total_pontos // n_empate
+                
+                for sid in jogadores_empatados:
+                    self.players[sid].score += pontos_por_cabeca
+                
+                posicao_ranking += n_empate
+
     def _advance_era(self):
-        self.current_era += 1
-        self._reset_era_state()
-        return self._deal_initial_hands()
+        self._calcular_pontuacao_era()
+        
+        if self.current_era < self.max_eras:
+            self.current_era += 1
+            self._reset_era_state()
+            return self._deal_initial_hands()
+        else:
+            # Fim da Partida
+            self.game_over = True
+            # Determina o vencedor
+            melhor_pontuacao = -1
+            vencedores = []
+            for p in self.players.values():
+                if p.score > melhor_pontuacao:
+                    melhor_pontuacao = p.score
+                    vencedores = [p.name]
+                elif p.score == melhor_pontuacao:
+                    vencedores.append(p.name)
+            
+            self.winner = " & ".join(vencedores)
+            return {}
 
     def add_player(self, sid, name):
-        if len(self.players) >= 6:
+        if len(self.players) >= 6 or self.game_over:
             return False, {}
 
         self.players[sid] = Player(sid, name)
+        if self.available_colors:
+            self.player_colors[sid] = self.available_colors.pop(0)
+        else:
+            self.player_colors[sid] = "#000000"
+
         if not self.current_turn:
             self.current_turn = sid
 
@@ -78,6 +149,9 @@ class EthnosGame:
         return True, updated_hands
 
     def draw_card(self, sid):
+        if self.game_over:
+            return False, "O jogo acabou."
+            
         if sid != self.current_turn:
             return False, "Não é o seu turno."
             
@@ -98,6 +172,9 @@ class EthnosGame:
         return True, {sid: list(self.players[sid].hand)}
 
     def draw_market_card(self, sid, card_index):
+        if self.game_over:
+            return False, "O jogo acabou."
+
         if sid != self.current_turn:
             return False, "Não é o seu turno."
             
@@ -115,6 +192,7 @@ class EthnosGame:
         return False, "Carta inválida."
 
     def play_band(self, sid, card_indices):
+        if self.game_over: return False, "O jogo acabou."
         if sid != self.current_turn:
             return False, "Não é o seu turno."
         if not card_indices:
@@ -123,34 +201,33 @@ class EthnosGame:
         player = self.players[sid]
         hand = player.hand
         
-        # Validar índices
         if any(i < 0 or i >= len(hand) for i in card_indices):
             return False, "Cartas inválidas selecionadas."
             
         selected_cards = [hand[i] for i in card_indices]
         leader = selected_cards[0]
         
-        # Verificar se é um bando válido (mesma tribo ou mesmo reino)
         is_valid_tribe = all(c['tribe'] == leader['tribe'] for c in selected_cards)
         is_valid_realm = all(c['realm'] == leader['realm'] for c in selected_cards)
         
         if not (is_valid_tribe or is_valid_realm):
-            return False, "Bando inválido. As cartas devem ter a mesma tribo ou o mesmo reino."
+            return False, "Bando inválido."
             
-        # O descarte: remover as cartas jogadas da mão
+        regiao_alvo = leader['realm']
+        marcadores_atuais = self.board[regiao_alvo].count(sid)
+        
+        if len(selected_cards) > marcadores_atuais:
+            self.board[regiao_alvo].append(sid)
+            
         remaining_cards = [c for i, c in enumerate(hand) if i not in card_indices]
-        
-        # Todas as cartas que sobraram na mão vão para o mercado (mesa)
         self.face_up_cards.extend(remaining_cards)
-        
-        # A mão do jogador fica vazia
         player.hand = []
         
-        # Passa o turno
         self._next_turn()
         return True, "Bando jogado com sucesso!"
 
     def _next_turn(self):
+        if self.game_over: return
         sids = list(self.players.keys())
         current_index = sids.index(self.current_turn)
         self.current_turn = sids[(current_index + 1) % len(sids)]
@@ -158,10 +235,18 @@ class EthnosGame:
     def get_public_state(self):
         return {
             'board': self.board,
+            'glory_tokens': self.glory_tokens,
             'face_up_cards': self.face_up_cards,
             'current_era': self.current_era,
             'max_eras': self.max_eras,
             'dragons_drawn': self.dragons_drawn,
-            'current_turn': self.players[self.current_turn].name if self.current_turn else None,
-            'players': {sid: p.get_public_info() for sid, p in self.players.items()}
+            'game_over': self.game_over,
+            'winner': self.winner,
+            'current_turn': self.players[self.current_turn].name if (self.current_turn and not self.game_over) else "Fim de Jogo",
+            'players': {
+                sid: {
+                    **p.get_public_info(), 
+                    'color': self.player_colors.get(sid, '#000')
+                } for sid, p in self.players.items()
+            }
         }
