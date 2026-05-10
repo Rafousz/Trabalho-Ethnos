@@ -1,7 +1,7 @@
 # game_logic/cards.py
 import random
 
-TRIBES = ['Centauros', 'Elfos', 'Anões', 'Orcs', 'Magos', 'Trolls']
+TRIBES = ['Guerreiros', 'Elfos', 'Anões', 'Orcs', 'Magos', 'Trolls']
 REALMS = ['strath', 'pelia', 'nida', 'shetan', 'alara', 'fara']
 DRAGON_TRIBE = 'Dragao'
 DRAGON_REALM = 'Especial'

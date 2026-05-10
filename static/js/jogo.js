@@ -3,6 +3,16 @@ const socket = io()
 let currentRoom = ""
 let selectedCards = []
 
+const realmColors = {
+  strath: '#3498db',   // Azul
+  pelia: '#2ecc71',    // Verde
+  nida: '#f1c40f',     // Amarelo
+  shetan: '#e74c3c',   // Vermelho
+  alara: '#9b59b6',    // Roxo
+  fara: '#e67e22',     // Laranja
+  Especial: '#7f8c8d'  // Cinza (Dragão)
+}
+
 function joinGame() {
   const name = document.getElementById("username").value
   currentRoom = document.getElementById("room").value
@@ -106,8 +116,10 @@ socket.on("game_update", (state) => {
       tokensHTML += `<span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:${cor}; margin: 2px; border: 1px solid #333;"></span>`
     })
 
+    const color = realmColors[realm] || '#2980b9'
+
     boardDiv.innerHTML += `
-      <div class="realm" style="min-width: 140px;">
+      <div class="realm" style="min-width: 140px; border-color: ${color};">
         <strong>${realm.toUpperCase()}</strong>
         ${glóriasListHTML}
         <div style="margin-top:8px; min-height:30px; border-top: 1px solid #ddd; padding-top: 5px;">${tokensHTML}</div>
@@ -123,7 +135,17 @@ socket.on("game_update", (state) => {
     const clickAttr =
       isDragon || state.game_over ? "" : `onclick="drawMarketCard(${index})"`
     const classAttr = isDragon ? "dragon" : ""
-    marketList.innerHTML += `<li class="${classAttr}" ${clickAttr}>${label}<br><small>${realm}</small></li>`
+    const imgName = isDragon ? "Dragao.png" : `${card.tribe}.png`
+    const borderColor = realmColors[realm] || '#ccc'
+
+    marketList.innerHTML += `
+      <li class="${classAttr}" ${clickAttr} style="background-color: ${borderColor}; border-color: ${borderColor}">
+        <img src="/static/images/cards/${imgName}" alt="${label}" class="card-img" onerror="this.src='/static/images/cards/Guerreiros.png'">
+        <div class="card-info">
+          <span class="tribe-name">Tribo: ${label}</span>
+          <small class="realm-name">Reino: ${realm}</small>
+        </div>
+      </li>`
   })
 })
 
@@ -132,7 +154,20 @@ socket.on("private_update", (data) => {
   const handList = document.getElementById("my-hand")
   handList.innerHTML = ""
   data.hand.forEach((card, index) => {
-    handList.innerHTML += `<li id="card-${index}" onclick="toggleSelect(${index})">${card.tribe}<br><small>${card.realm}</small></li>`
+    const isDragon = !!card.is_dragon
+    const label = isDragon ? "Dragão" : card.tribe
+    const realm = isDragon ? "Especial" : card.realm
+    const imgName = isDragon ? "Dragao.png" : `${card.tribe}.png`
+    const borderColor = realmColors[realm] || '#ccc'
+
+    handList.innerHTML += `
+      <li id="card-${index}" onclick="toggleSelect(${index})" style="background-color: ${borderColor}; border-color: ${borderColor}">
+        <img src="/static/images/cards/${imgName}" alt="${label}" class="card-img" onerror="this.src='/static/images/cards/Guerreiros.png'">
+        <div class="card-info">
+          <span class="tribe-name">Tribo: ${label}</span>
+          <small class="realm-name">Reino: ${realm}</small>
+        </div>
+      </li>`
   })
 })
 
