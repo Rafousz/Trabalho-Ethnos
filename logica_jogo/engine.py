@@ -149,8 +149,14 @@ class EthnosGame:
         return True, updated_hands
 
     def draw_card(self, sid):
-        if sid != self.current_turn or self.game_over:
-            return False, {}
+        if self.game_over:
+            return False, "O jogo acabou."
+            
+        if sid != self.current_turn:
+            return False, "Não é o seu turno."
+            
+        if len(self.players[sid].hand) >= 10:
+            return False, "Limite máximo de 10 cartas atingido. Você deve jogar um bando."
 
         card, era_end = self._draw_until_non_dragon()
         if era_end:
@@ -159,23 +165,31 @@ class EthnosGame:
             return True, updated_hands
 
         if card is None:
-            return False, {}
+            return False, "O baralho está vazio."
 
         self.players[sid].add_card_to_hand(card)
         self._next_turn()
         return True, {sid: list(self.players[sid].hand)}
 
     def draw_market_card(self, sid, card_index):
-        if self.game_over: return False, {}
-        if sid == self.current_turn and 0 <= card_index < len(self.face_up_cards):
+        if self.game_over:
+            return False, "O jogo acabou."
+
+        if sid != self.current_turn:
+            return False, "Não é o seu turno."
+            
+        if len(self.players[sid].hand) >= 10:
+            return False, "Limite máximo de 10 cartas atingido. Você deve jogar um bando."
+
+        if 0 <= card_index < len(self.face_up_cards):
             card = self.face_up_cards[card_index]
             if self._is_dragon(card):
-                return False, {}
+                return False, "Não é possível comprar um dragão."
             card = self.face_up_cards.pop(card_index)
             self.players[sid].add_card_to_hand(card)
             self._next_turn()
             return True, {sid: list(self.players[sid].hand)}
-        return False, {}
+        return False, "Carta inválida."
 
     def play_band(self, sid, card_indices):
         if self.game_over: return False, "O jogo acabou."
