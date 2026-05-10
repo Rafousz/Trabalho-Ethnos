@@ -47,3 +47,39 @@ def test_deck_generation():
     
     dragons = [card for card in deck if card.get('is_dragon')]
     assert len(dragons) == 3
+
+def test_hand_limit_draw_card():
+    """Testa se o limite de 10 cartas impede a compra do baralho."""
+    game = EthnosGame('room1')
+    game.add_player('sid1', 'Player1')
+    game.add_player('sid2', 'Player2')
+    
+    player = game.players['sid1']
+    player.hand = [{'tribe': 'Centaur', 'realm': 'Stratia', 'is_dragon': False} for _ in range(10)]
+    
+    game.current_turn = 'sid1'
+    
+    success, msg = game.draw_card('sid1')
+    
+    assert success is False
+    assert msg == "Limite máximo de 10 cartas atingido. Você deve jogar um bando."
+    assert len(player.hand) == 10
+
+def test_hand_limit_draw_market_card():
+    """Testa se o limite de 10 cartas impede a compra do mercado."""
+    game = EthnosGame('room1')
+    game.add_player('sid1', 'Player1')
+    game.add_player('sid2', 'Player2')
+    
+    player = game.players['sid1']
+    player.hand = [{'tribe': 'Centaur', 'realm': 'Stratia', 'is_dragon': False} for _ in range(10)]
+    
+    game.current_turn = 'sid1'
+    game.face_up_cards = [{'tribe': 'Elf', 'realm': 'Pelagia', 'is_dragon': False}]
+    
+    success, msg = game.draw_market_card('sid1', 0)
+    
+    assert success is False
+    assert msg == "Limite máximo de 10 cartas atingido. Você deve jogar um bando."
+    assert len(player.hand) == 10
+
