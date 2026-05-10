@@ -10,68 +10,68 @@
 
 **Mecânicas principais:**
 
-1. **Combinação de cartas**  
-   1. Jogadores formam grupos de cartas da mesma facção OU mesma cor  
-   2. Quanto maior o grupo,  mais forte a jogada  
-   3. A carta do topo defini o poder da e facção  
+1. **Combinação de cartas**
+   1. Jogadores formam grupos de cartas da mesma facção OU mesma cor
+   2. Quanto maior o grupo, mais forte a jogada
+   3. A carta do topo defini o poder da e facção
    4. A quantidade de cartas, influência na pontuação
 
-2. **Controle de territórios**  
-   1. O tabuleiro é dividido em regiões  
-   2. Cada região pode ser dominada por quem tiver mais tokens  
-   3. Cada região tem pontuação diferente  
+2. **Controle de territórios**
+   1. O tabuleiro é dividido em regiões
+   2. Cada região pode ser dominada por quem tiver mais tokens
+   3. Cada região tem pontuação diferente
    4. Para colocar um token numa região é necessário baixar um número de cartas maior do que a quantidade de tokens na região.
 
-3. **Sistema de eras**  
-   1. Era 1 → início  
-   2. Era 2 → meio  
-   3. Era 3 → final  
+3. **Sistema de eras**
+   1. Era 1 → início
+   2. Era 2 → meio
+   3. Era 3 → final
    4. Ao final de cada era, gera uma pontuação parcial
 
 4. **Habilidades por facção**
 
-| Facção | Habilidade |
-| :---- | :---- |
-| Magos | Jogar cartas extras |
-| Guerreiros | Dominar territórios com menos cartas |
-| Mercadores | Ganhar pontos extras |
-| Assassinos | Remover token adversário |
-| Nobres | Bônus no final da era |
+| Facção    | Habilidade                                                                                                                    |
+| :-------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| Centauros | Dominar territórios independente da região do líder                                                                           |
+| Elfos     | Ao dominar territórios, pode manter o número de cartas equivalente ao tamanho do bando                                        |
+| Anões     | Ganhar pontos extras de acordo com o tamanho do bando que você jogou                                                          |
+| Orcs      | Faz o tamanho do bando necessário para colocar um token naquela região ser igual ao número de tokens (normalmente é tokens+1) |
+| Magos     | Após descartar a mão no mercado, puxa do baralho um número de cartas de acordo com o tamanho do bando jogado                  |
+| Trolls    | O token de um lider troll tem peso maior caso aja empate no fim da era, desempatando aquela região                            |
 
 **Componentes**
 
-* Tabuleiro com regiões conectadas  
-* Cartas de facções  
-* Tokens (marcadores de território)  
-* Contadores de pontos
+- Tabuleiro com regiões conectadas
+- Cartas de facções
+- Tokens (marcadores de território)
+- Contadores de pontos
 
 **Regras principais**:
 
-* Sua vez:  
-  * O jogador deve escolher uma ação:   
-    * Comprar uma carta   
-    * Jogar cartas para colocar tokens
+- Sua vez:
+  - O jogador deve escolher uma ação:
+    - Comprar uma carta
+    - Jogar cartas para colocar tokens
 
-* Ao jogar cartas:  
-  * Deve jogar cartas da mesma cor OU facção  
-  * Coloca tokens em territórios  
-  * Ativa habilidade da facção dependendo do líder da sua facção
+- Ao jogar cartas:
+  - Deve jogar cartas da mesma cor OU facção
+  - Coloca tokens em territórios
+  - Ativa habilidade da facção dependendo do líder da sua facção
 
-* Colocar Tokens:  
-  * Para colocar tokens em territórios deverá baixar número de cartas maior que o número de tokens no território
+- Colocar Tokens:
+  - Para colocar tokens em territórios deverá baixar número de cartas maior que o número de tokens no território
 
+- Pontuação:
+  - Ao final de cada era, o jogador que controlar mais territórios em cada região ganha pontos
 
-* Pontuação:  
-  * Ao final de cada era, o jogador que controlar mais territórios em cada região ganha pontos
+- Após 3 eras:
+  - Soma total de pontos
+  - Quem tiver mais pontos, vence o jogo
 
-* Após 3 eras:  
-  * Soma total de pontos  
-  * Quem tiver mais pontos, vence o jogo
-
-**Escopo do projeto:**   
+**Escopo do projeto:**  
 Trabalho que deve ser feito para construir o produto. Poderia usar EAP para fazer o escopo do projeto.
 
-- Deve existir sistema de pontuação por território  
-- Deve haver divisão em 3 eras  
-- Cada facção deve possuir habilidades únicas  
+- Deve existir sistema de pontuação por território
+- Deve haver divisão em 3 eras
+- Cada facção deve possuir habilidades únicas
 - O jogador deve poder comprar ou jogar cartas por turno
