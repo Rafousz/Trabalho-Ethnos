@@ -216,6 +216,9 @@ class EthnosGame:
         regiao_alvo = leader['realm']
         marcadores_atuais = self.board[regiao_alvo].count(sid)
         
+        if len(selected_cards) <= marcadores_atuais:
+            return False, f"Você não pode jogar este bando. Já tem {marcadores_atuais} token(s) em {regiao_alvo} e o bando tem apenas {len(selected_cards)} carta(s)."
+        
         if len(selected_cards) > marcadores_atuais:
             self.board[regiao_alvo].append(sid)
             
