@@ -32,7 +32,7 @@
 
 | Facção    | Habilidade                                                                                                                    |
 | :-------- | :---------------------------------------------------------------------------------------------------------------------------- |
-| Centauros | Dominar territórios independente da região do líder                                                                           |
+| Guerreiros | Dominar territórios independente da região do líder                                                                           |
 | Elfos     | Ao dominar territórios, pode manter o número de cartas equivalente ao tamanho do bando                                        |
 | Anões     | Ganhar pontos extras de acordo com o tamanho do bando que você jogou                                                          |
 | Orcs      | Faz o tamanho do bando necessário para colocar um token naquela região ser igual ao número de tokens (normalmente é tokens+1) |
