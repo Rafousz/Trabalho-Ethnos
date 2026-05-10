@@ -159,9 +159,11 @@ def test_play_band_with_more_cards_than_tokens():
     # Coloca 1 token do jogador em nida (nova estrutura de board)
     game.board['nida'] = [{'sid': 'sid1', 'is_troll': False}]
     game.current_turn = 'sid1'
-    
+    # Limpa o mercado para isolar o que a jogada descarta (add_player pode revelar dragoes)
+    game.face_up_cards = []
+
     success, msg, _ = game.play_band('sid1', [0, 1])
-    
+
     assert success is True
     assert len(player.hand) == 0
     assert len(game.board['nida']) == 2  # Um novo token foi adicionado
