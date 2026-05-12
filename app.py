@@ -13,13 +13,63 @@ games = {}
 def index():
     return render_template('index.html')
 
+def get_rooms_info():
+    rooms_info = []
+    for room_name, game in games.items():
+        # players in the game (game.players is a dict or we can use get_public_state)
+        # However, EthnosGame has self.players as a list or dict? Let me check EthnosGame.
+        # Actually in public_state it returns players as dict.
+        state = game.get_public_state()
+        players_count = len(state['players'])
+        rooms_info.append({'name': room_name, 'players': players_count})
+    return rooms_info
+
+def broadcast_rooms():
+    socketio.emit('rooms_update', get_rooms_info())
+
+@socketio.on('connect')
+def handle_connect():
+    emit('rooms_update', get_rooms_info())
+
+@socketio.on('create_game')
+def handle_create(data):
+    room = data.get('room')
+    name = data.get('name')
+
+    if not room or not name:
+        emit('error', {'msg': 'Nome ou Sala em branco.'})
+        return
+
+    if room in games:
+        emit('error', {'msg': 'Já existe uma sala com esse nome.'})
+        return
+
+    games[room] = EthnosGame(room)
+    game = games[room]
+    success, updated_hands = game.add_player(request.sid, name)
+    
+    if success:
+        join_room(room)
+        for sid, hand in updated_hands.items():
+            emit('private_update', {'hand': hand}, to=sid)
+        emit('game_update', game.get_public_state(), room=room)
+        emit('join_success', {'room': room})
+        broadcast_rooms()
+    else:
+        emit('error', {'msg': 'Erro ao criar sala!'})
+
 @socketio.on('join_game')
 def handle_join(data):
-    room = data['room']
-    name = data['name']
+    room = data.get('room')
+    name = data.get('name')
+
+    if not room or not name:
+        emit('error', {'msg': 'Nome ou Sala em branco.'})
+        return
 
     if room not in games:
-        games[room] = EthnosGame(room)
+        emit('error', {'msg': 'Sala não encontrada. Crie uma nova sala.'})
+        return
 
     game = games[room]
     success, updated_hands = game.add_player(request.sid, name)
@@ -28,6 +78,8 @@ def handle_join(data):
         for sid, hand in updated_hands.items():
             emit('private_update', {'hand': hand}, to=sid)
         emit('game_update', game.get_public_state(), room=room)
+        emit('join_success', {'room': room})
+        broadcast_rooms()
     else:
         emit('error', {'msg': 'Sala cheia!'})
 
