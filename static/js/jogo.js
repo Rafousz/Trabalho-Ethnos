@@ -27,16 +27,50 @@ const realmNames = {
 // Entrada no jogo
 // ---------------------------------------------------------------------------
 
-function joinGame() {
-  const name = document.getElementById("username").value
-  currentRoom = document.getElementById("room").value
+socket.on('rooms_update', (rooms) => {
+  const roomsList = document.getElementById("rooms-list")
+  if (!roomsList) return
+  roomsList.innerHTML = ""
+  
+  if (rooms.length === 0) {
+    roomsList.innerHTML = "<li>Nenhuma sala criada.</li>"
+    return
+  }
 
-  if (name && currentRoom) {
-    socket.emit("join_game", { name: name, room: currentRoom })
-    document.getElementById("login-screen").style.display = "none"
-    document.getElementById("game-screen").style.display = "block"
+  rooms.forEach(room => {
+    roomsList.innerHTML += `
+      <li style="margin-bottom: 10px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+        <span><strong>${room.name}</strong> (${room.players}/6)</span>
+        <button onclick="joinExistingGame('${room.name}')">Entrar</button>
+      </li>
+    `
+  })
+})
+
+socket.on('join_success', (data) => {
+  currentRoom = data.room
+  document.getElementById("login-screen").style.display = "none"
+  document.getElementById("game-screen").style.display = "block"
+})
+
+function createGame() {
+  const name = document.getElementById("username").value
+  const room = document.getElementById("room").value
+
+  if (name && room) {
+    socket.emit("create_game", { name: name, room: room })
   } else {
     alert("Preencha nome e sala.")
+  }
+}
+
+function joinExistingGame(roomName) {
+  const name = document.getElementById("username").value
+
+  if (name) {
+    socket.emit("join_game", { name: name, room: roomName })
+  } else {
+    alert("Preencha seu nome para entrar na sala.")
   }
 }
 
@@ -233,19 +267,22 @@ socket.on("game_update", (state) => {
       .querySelectorAll(".actions button")
       .forEach((btn) => (btn.disabled = true))
   } else {
-    let turnText = `Turno de: ${state.current_turn}`
+    let currentPlayer = Object.values(state.players).find(p => p.name === state.current_turn);
+    let colorSpan = currentPlayer ? `<span style="display:inline-block; width:15px; height:15px; background:${currentPlayer.color}; border-radius:50%; margin-right:8px; vertical-align: middle; border: 1px solid #333;"></span>` : "";
+
+    let turnText = `Turno de: ${colorSpan}${state.current_turn}`
 
     // Indica poder ativo se há ação pendente
     if (state.pending_action) {
       const tipo = state.pending_action.type
       if (tipo === "guerreiros_choose_realm") {
-        turnText += "(escolhendo reino...)"
+        turnText += " (escolhendo reino...)"
       } else if (tipo === "elfos_keep_cards") {
-        turnText += "(escolhendo cartas...)"
+        turnText += " (escolhendo cartas...)"
       }
     }
 
-    document.getElementById("turn-indicator").innerText = turnText
+    document.getElementById("turn-indicator").innerHTML = turnText
   }
 
   document.getElementById("era-indicator").innerText =
