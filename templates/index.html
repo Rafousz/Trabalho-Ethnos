@@ -12,15 +12,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
   </head>
   <body>
-
     <div id="login-screen">
+      <h2>ETHNOS</h2>
+      <h3>Criar Sala</h3>
       <input type="text" id="username" placeholder="Seu Nome" />
       <input type="text" id="room" placeholder="Nome da Sala" />
-      <button onclick="joinGame()">Entrar na Partida</button>
+      <button onclick="createRoom()">Criar Sala</button>
+      
+      <div id="rooms-list">
+        <h3>Salas Disponíveis</h3>
+        <ul id="rooms-container"></ul>
+      </div>
     </div>
 
     <div id="game-screen" style="display: none">
-
+      <h2>Ethnos</h2>
       <div id="game-header">
         <h2 id="turn-indicator">Turno: Aguardando...</h2>
         <div class="status">
@@ -29,15 +35,14 @@
         </div>
       </div>
       
+      <div class="actions">
+        <button onclick="drawCard()">Comprar Carta do Topo</button>
+        <button onclick="playBand()">Jogar Bando</button>
+      </div>
 
       <div class="market-area">
         <div class="market">
           <h3>Mercado (Cartas Abertas)</h3>
-
-          <div class="actions">
-            <button onclick="drawCard()">Comprar Carta do Topo</button>
-            <button onclick="playBand()">Jogar Bando</button>
-          </div>
         </div>
         
         <ul id="market-list" class="card-list"></ul>
