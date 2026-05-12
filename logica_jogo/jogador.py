@@ -1,4 +1,3 @@
-# game_logic/player.py
 class Player:
     def __init__(self, sid, name):
         self.sid = sid
