@@ -27,10 +27,12 @@ class EthnosGame:
         self.player_colors = {}
 
         self.glory_tokens = {}
-        valores_base = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         for realm in REALMS:
-            valores = sorted(random.choices(valores_base, k=3))
-            self.glory_tokens[realm] = valores
+            self.glory_tokens[realm] = [
+                random.randint(1, 3),
+                random.randint(4, 6),
+                random.randint(7, 10),
+            ]
 
         self._reset_era_state()
 
