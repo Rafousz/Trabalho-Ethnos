@@ -1,4 +1,3 @@
-# game_logic/cards.py
 import random
 
 TRIBES = ['Guerreiros', 'Elfos', 'Anões', 'Orcs', 'Magos', 'Trolls']
