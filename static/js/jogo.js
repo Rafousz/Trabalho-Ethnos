@@ -23,21 +23,79 @@ const realmNames = {
   fara: "Fara",
 }
 
-// ---------------------------------------------------------------------------
 // Entrada no jogo
 // ---------------------------------------------------------------------------
 
-function joinGame() {
+function createRoom() {
   const name = document.getElementById("username").value
   currentRoom = document.getElementById("room").value
 
   if (name && currentRoom) {
-    socket.emit("join_game", { name: name, room: currentRoom })
-    document.getElementById("login-screen").style.display = "none"
-    document.getElementById("game-screen").style.display = "block"
+    socket.emit("create_room", { name: name, room: currentRoom })
   } else {
     alert("Preencha nome e sala.")
   }
+}
+
+function joinExistingRoom(roomName) {
+  const name = document.getElementById("username").value
+  
+  if (!name) {
+    alert("Preencha seu nome.")
+    return
+  }
+  
+  currentRoom = roomName
+  socket.emit("join_room", { name: name, room: roomName })
+}
+
+function loadRoomsList() {
+  socket.emit("get_rooms_list")
+}
+
+// Quando conecta ao servidor, carrega lista de salas
+socket.on("connect", () => {
+  loadRoomsList()
+})
+
+// Recebe e renderiza atualização da lista de salas
+socket.on("update_rooms_list", (data) => {
+  renderRoomsList(data.rooms)
+})
+
+function renderRoomsList(rooms) {
+  const container = document.getElementById("rooms-container")
+  container.innerHTML = ""
+  
+  if (rooms.length === 0) {
+    container.innerHTML = "<li style='padding: 10px; color: #999;'>Nenhuma sala disponível</li>"
+    return
+  }
+  
+  rooms.forEach((room) => {
+    const statusClass = `status-${room.status}`
+    const statusText = room.status === "aguardando" ? "Aguardando" : 
+                       room.status === "em_andamento" ? "Em Andamento" :
+                       room.status === "finalizada" ? "Finalizada" : "Vazia"
+    
+    const isRoomFull = room.players >= room.max_players
+    const isGameFinished = room.status === "finalizada"
+    
+    const li = document.createElement("li")
+    li.className = "room-item"
+    li.innerHTML = `
+      <div class="room-info">
+        <strong>${room.name}</strong>
+        <span class="room-players">${room.players}/${room.max_players}</span>
+        <span class="room-status ${statusClass}">${statusText}</span>
+      </div>
+      <button onclick="joinExistingRoom('${room.name}')" 
+              ${isRoomFull || isGameFinished ? 'disabled' : ''}>
+        ${isRoomFull ? 'Sala Cheia' : isGameFinished ? 'Finalizada' : 'Entrar'}
+      </button>
+    `
+    container.appendChild(li)
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -226,6 +284,12 @@ function showKeepCardsModal(cards, nManter) {
 // ---------------------------------------------------------------------------
 
 socket.on("game_update", (state) => {
+  // Muda de tela quando jogo é confirmado (primeira conexão bem-sucedida)
+  if (document.getElementById("login-screen").style.display !== "none") {
+    document.getElementById("login-screen").style.display = "none"
+    document.getElementById("game-screen").style.display = "block"
+  }
+  
   if (state.game_over) {
     document.getElementById("turn-indicator").innerHTML =
       `<span style="color: #27ae60; font-size: 1.5em;">🏆 VENCEDOR: ${state.winner} 🏆</span>`
